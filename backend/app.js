@@ -41,7 +41,7 @@ app.use('/uploads', express.static(path.resolve(process.env.UPLOAD_PATH || './up
 // Rate Limiting
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100,
+  max: 1000,
   message: 'Too many requests from this IP, please try again later.'
 });
 app.use('/api/', apiLimiter);

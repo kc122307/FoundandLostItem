@@ -10,19 +10,7 @@ import { scoreOwnerAnswers } from '../services/verification.service.js';
 const addPoints = async (userId, type) => {
   const points = type === 'CLAIM_APPROVED' ? 10 : type === 'ITEM_RETURNED' ? 15 : 0;
   if (points > 0) {
-    const user = await User.findByIdAndUpdate(userId, { $inc: { reputationScore: points } }, { new: true });
-    
-    // Check badges
-    const newBadges = new Set(user.badges);
-    if (user.reputationScore >= 50) newBadges.add('verified_finder');
-    if (user.reputationScore >= 100) newBadges.add('trusted_helper');
-    if (user.reputationScore >= 250) newBadges.add('community_hero');
-    if (user.reputationScore >= 500) newBadges.add('super_contributor');
-    
-    if (newBadges.size > user.badges.length) {
-      user.badges = Array.from(newBadges);
-      await user.save({ validateBeforeSave: false });
-    }
+    await User.findByIdAndUpdate(userId, { $inc: { reputationScore: points } }, { new: true });
   }
 };
 

@@ -11,6 +11,7 @@ const chatSchema = new mongoose.Schema({
     senderId: { type: mongoose.Schema.Types.ObjectId },
     createdAt: { type: Date }
   },
+  hiddenBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   createdAt: { type: Date, default: Date.now }
 });
 

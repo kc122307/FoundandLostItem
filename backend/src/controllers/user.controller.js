@@ -18,7 +18,7 @@ export const updateProfile = async (req, res, next) => {
 
 export const getUserProfile = async (req, res, next) => {
   try {
-    const user = await User.findById(req.params.id).select('name avatar city college reputationScore badges isVerified createdAt');
+    const user = await User.findById(req.params.id).select('name avatar city college reputationScore isVerified createdAt');
     if (!user) return res.status(404).json({ error: 'User not found' });
     res.status(200).json({ user });
   } catch (error) {

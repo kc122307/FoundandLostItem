@@ -38,7 +38,10 @@ export const getOrCreateChat = async (req, res, next) => {
 
 export const getChats = async (req, res, next) => {
   try {
-    const chats = await Chat.find({ participants: req.user._id })
+    const chats = await Chat.find({ 
+      participants: req.user._id,
+      hiddenBy: { $ne: req.user._id }
+    })
       .populate('participants', 'name avatar isVerified')
       .populate('lostItemId', 'title images status')
       .populate('foundItemId', 'title images status')
@@ -117,6 +120,7 @@ export const sendImageMessage = async (req, res, next) => {
       senderId: req.user._id,
       createdAt: new Date()
     };
+    chat.hiddenBy = []; // Unhide chat when new message is sent
     await chat.save();
 
     if (io) {
@@ -124,6 +128,26 @@ export const sendImageMessage = async (req, res, next) => {
     }
 
     res.status(201).json({ message });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const hideChat = async (req, res, next) => {
+  try {
+    const { chatId } = req.params;
+    const chat = await Chat.findById(chatId);
+    
+    if (!chat || !chat.participants.some(p => p.toString() === req.user._id.toString())) {
+      return res.status(403).json({ error: 'Unauthorized to hide this chat' });
+    }
+
+    if (!chat.hiddenBy.includes(req.user._id)) {
+      chat.hiddenBy.push(req.user._id);
+      await chat.save();
+    }
+
+    res.status(200).json({ success: true });
   } catch (error) {
     next(error);
   }

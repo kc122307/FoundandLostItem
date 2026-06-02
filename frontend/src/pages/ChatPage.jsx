@@ -51,6 +51,20 @@ const ChatPage = () => {
     }
   };
 
+  const handleHideChat = async (chatId, e) => {
+    e.stopPropagation();
+    try {
+      await chatService.hideChat(chatId);
+      setChats(chats.filter(c => c._id !== chatId));
+      if (activeChat?._id === chatId) {
+        setActiveChat(null);
+        setMessages([]);
+      }
+    } catch (error) {
+      console.error('Failed to hide chat:', error);
+    }
+  };
+
   // Auto scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -111,13 +125,13 @@ const ChatPage = () => {
                 <div 
                   key={chat._id} 
                   onClick={() => selectChat(chat)}
-                  className={`p-4 border-b border-slate-200/50 cursor-pointer hover:bg-slate-100 transition ${isActive ? 'bg-slate-100 border-l-4 border-l-indigo-500' : ''}`}
+                  className={`p-4 border-b border-slate-200/50 cursor-pointer hover:bg-slate-100 transition relative group ${isActive ? 'bg-slate-100 border-l-4 border-l-indigo-500' : ''}`}
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-indigo-900 flex items-center justify-center font-bold text-indigo-300 flex-shrink-0">
                       {otherUser?.name?.charAt(0) || '?'}
                     </div>
-                    <div className="overflow-hidden flex-1">
+                    <div className="overflow-hidden flex-1 pr-6">
                       <div className="flex justify-between items-baseline">
                         <h4 className="font-semibold truncate">{otherUser?.name || 'Unknown'}</h4>
                         <span className="text-xs text-slate-500 flex-shrink-0 ml-2">
@@ -129,6 +143,15 @@ const ChatPage = () => {
                       </p>
                     </div>
                   </div>
+                  <button 
+                    onClick={(e) => handleHideChat(chat._id, e)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Remove Chat"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
                 </div>
               );
             })

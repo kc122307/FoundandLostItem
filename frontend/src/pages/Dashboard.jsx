@@ -11,19 +11,19 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('lost');
 
   const { data: lostData, isLoading: loadingLost } = useQuery({
-    queryKey: ['myLostItems'],
-    queryFn: () => lostItemService.getAll({ user: user._id }), // Wait, we didn't add a strict user filter in the backend getAll, but usually we use a specific endpoint or just filter. We'll simulate it or use the backend search.
+    queryKey: ['myLostItems', user?._id],
+    queryFn: () => lostItemService.getAll({ user: user._id }), 
   });
 
   const { data: foundData, isLoading: loadingFound } = useQuery({
-    queryKey: ['myFoundItems'],
+    queryKey: ['myFoundItems', user?._id],
     queryFn: () => foundItemService.getAll({ user: user._id }),
   });
 
   // Filter items manually since backend getAll returns all (if no user filter implemented in query)
   // Assuming the backend returns items belonging to all, we will filter by userId locally for this MVP dashboard
-  const myLostItems = lostData?.items?.filter(item => item.userId === user?._id || item.userId?._id === user?._id) || [];
-  const myFoundItems = foundData?.items?.filter(item => item.userId === user?._id || item.userId?._id === user?._id) || [];
+  const myLostItems = lostData?.items?.filter(item => String(item.userId?._id || item.userId) === String(user?._id)) || [];
+  const myFoundItems = foundData?.items?.filter(item => String(item.userId?._id || item.userId) === String(user?._id)) || [];
 
   const currentItems = activeTab === 'lost' ? myLostItems : myFoundItems;
   const isLoading = activeTab === 'lost' ? loadingLost : loadingFound;
@@ -39,13 +39,6 @@ const Dashboard = () => {
           <div>
             <h1 className="text-3xl font-bold">Welcome back, {user?.name}</h1>
             <p className="text-slate-600 mt-1">Reputation Score: <span className="text-indigo-400 font-semibold">{user?.reputationScore || 0}</span></p>
-            <div className="flex gap-2 mt-2">
-              {user?.badges?.map(badge => (
-                <span key={badge} className="text-xs px-2 py-1 bg-indigo-500/20 text-indigo-300 rounded-md">
-                  {badge.replace('_', ' ')}
-                </span>
-              ))}
-            </div>
           </div>
         </div>
         <div className="flex gap-4">

@@ -21,7 +21,6 @@ import Notifications from './pages/Notifications';
 import Profile from './pages/Profile';
 import AdminPanel from './pages/AdminPanel';
 
-// Protected Route Wrapper
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuthStore();
   
@@ -29,7 +28,18 @@ const ProtectedRoute = ({ children }) => {
     return <div className="min-h-screen flex items-center justify-center bg-slate-50"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div></div>;
   }
   
-  return isAuthenticated ? children : <Navigate to="/login" />;
+  return isAuthenticated ? children : <Navigate to="/login" replace />;
+};
+
+// Guest Route Wrapper (Redirects to dashboard if logged in)
+const GuestRoute = ({ children }) => {
+  const { isAuthenticated, isLoading } = useAuthStore();
+  
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center bg-slate-50"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div></div>;
+  }
+  
+  return !isAuthenticated ? children : <Navigate to="/dashboard" replace />;
 };
 
 const queryClient = new QueryClient({
@@ -60,9 +70,9 @@ function AppContent() {
       
       <Routes>
         <Route path="/" element={<Layout />}>
-          <Route index element={<LandingPage />} />
-          <Route path="login" element={<Login />} />
-          <Route path="register" element={<Register />} />
+          <Route index element={<GuestRoute><LandingPage /></GuestRoute>} />
+          <Route path="login" element={<GuestRoute><Login /></GuestRoute>} />
+          <Route path="register" element={<GuestRoute><Register /></GuestRoute>} />
           <Route path="explore" element={<Explore />} />
           <Route path="item/lost/:id" element={<ItemDetail type="lost" />} />
           <Route path="item/found/:id" element={<ItemDetail type="found" />} />

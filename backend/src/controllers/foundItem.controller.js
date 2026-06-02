@@ -8,23 +8,20 @@ export const create = async (req, res, next) => {
   try {
     const { 
       title, category, description, color, brand, 
-      dateFound, location, additionalNotes, handoverLocation, verificationAnswers
+      dateFound, location, additionalNotes, handoverLocation, verificationQuestions
     } = req.body;
 
     const parsedLocation = typeof location === 'string' ? JSON.parse(location) : location;
-    const parsedAnswers = typeof verificationAnswers === 'string' ? JSON.parse(verificationAnswers) : verificationAnswers;
+    const parsedQuestions = typeof verificationQuestions === 'string' ? JSON.parse(verificationQuestions) : verificationQuestions;
 
-    const validation = validateAnswersForCategory(category, parsedAnswers);
-    if (!validation.valid) {
-      return res.status(400).json({ error: validation.errors.join(' ') });
+    if (!Array.isArray(parsedQuestions) || parsedQuestions.length !== 2) {
+      return res.status(400).json({ error: 'Exactly two verification questions are required' });
     }
 
-    const questions = getQuestionsForCategory(category);
-    const verificationQuestions = parsedAnswers.map((ans, idx) => ({
-      question: questions[idx].question,
-      answer: ans,
-      answerType: questions[idx].answerType,
-      hint: questions[idx].hint
+    const finalVerificationQuestions = parsedQuestions.map(q => ({
+      question: q.question,
+      answer: q.answer,
+      answerType: q.answerType || 'generic'
     }));
 
     const imageEmbeddings = [];
@@ -49,7 +46,7 @@ export const create = async (req, res, next) => {
       imageEmbeddings,
       additionalNotes,
       handoverLocation,
-      verificationQuestions
+      verificationQuestions: finalVerificationQuestions
     });
 
     await foundItem.save();
@@ -70,9 +67,10 @@ export const create = async (req, res, next) => {
 
 export const getAll = async (req, res, next) => {
   try {
-    const { category, city, status = 'available', page = 1, limit = 20, search } = req.query;
+    const { category, city, status = 'active', page = 1, limit = 20, search, user } = req.query;
 
     const query = { status };
+    if (user) query.userId = user;
     if (category) query.category = category;
     if (city) query['location.city'] = { $regex: new RegExp(city, 'i') };
     if (search) {

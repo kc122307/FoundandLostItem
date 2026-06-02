@@ -56,9 +56,10 @@ export const create = async (req, res, next) => {
 
 export const getAll = async (req, res, next) => {
   try {
-    const { category, city, status = 'active', page = 1, limit = 20, search } = req.query;
+    const { category, city, status = 'active', page = 1, limit = 20, search, user } = req.query;
 
     const query = { status };
+    if (user) query.userId = user;
     if (category) query.category = category;
     if (city) query['location.city'] = { $regex: new RegExp(city, 'i') };
     if (search) {

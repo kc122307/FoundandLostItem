@@ -1,6 +1,7 @@
 import Challenge from '../models/Challenge.js';
 import LostItem from '../models/LostItem.js';
 import Chat from '../models/Chat.js';
+import User from '../models/User.js';
 import { createNotification } from '../services/notification.service.js';
 import { scoreOwnerAnswers } from '../services/verification.service.js';
 
@@ -103,6 +104,10 @@ export const answerChallenge = async (req, res, next) => {
       // Update Lost Item
       challenge.lostItemId.status = 'matched';
       await challenge.lostItemId.save();
+
+      // Reward points
+      await User.findByIdAndUpdate(req.user._id, { $inc: { reputationScore: 10 } });
+      await User.findByIdAndUpdate(challenge.finderId, { $inc: { reputationScore: 15 } });
 
       // Notify Finder
       await createNotification({

@@ -27,7 +27,7 @@ const foundItemSchema = new mongoose.Schema({
     type: [{
       question: { type: String, required: true },
       answer: { type: String, required: true, select: false },
-      answerType: { type: String, enum: ['exact', 'keyword', 'numeric', 'descriptive'], required: true },
+      answerType: { type: String, enum: ['exact', 'keyword', 'numeric', 'descriptive', 'generic'], required: true },
       hint: { type: String }
     }],
     validate: [val => val.length === 2, 'Exactly 2 verification questions are required']

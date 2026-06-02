@@ -16,7 +16,6 @@ const userSchema = new mongoose.Schema({
   isBanned: { type: Boolean, default: false },
   banReason: { type: String },
   reputationScore: { type: Number, default: 0 },
-  badges: [{ type: String, enum: ['trusted_helper', 'community_hero', 'verified_finder', 'super_contributor'] }],
   emailVerificationToken: { type: String, select: false },
   emailVerifiedAt: { type: Date },
   passwordResetToken: { type: String, select: false },

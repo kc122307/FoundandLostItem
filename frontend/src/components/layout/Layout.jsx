@@ -1,8 +1,27 @@
 import { Outlet } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { notificationService } from '../../services/notification.service';
+import useNotificationStore from '../../store/notificationStore';
+import useAuthStore from '../../store/authStore';
 import Navbar from './Navbar';
 import Footer from './Footer';
 
 const Layout = () => {
+  const { isAuthenticated } = useAuthStore();
+  const { setNotifications } = useNotificationStore();
+
+  const { data: notifData } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: notificationService.getMyNotifications,
+    enabled: !!isAuthenticated
+  });
+
+  useEffect(() => {
+    if (notifData) {
+      setNotifications(notifData.notifications, notifData.unreadCount);
+    }
+  }, [notifData, setNotifications]);
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden bg-slate-50 text-slate-900">
       {/* Background ambient effects */}

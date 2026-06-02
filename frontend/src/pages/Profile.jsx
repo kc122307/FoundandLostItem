@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import useAuthStore from '../store/authStore';
-import { BADGES } from '../utils/constants';
+import api from '../services/api';
+import toast from 'react-hot-toast';
 
 const Profile = () => {
   const { user } = useAuthStore();
@@ -12,11 +13,21 @@ const Profile = () => {
     mobile: user?.mobile || ''
   });
 
-  const handleSubmit = (e) => {
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Simulate update since user endpoint isn't fully wired for updates in MVP
-    alert('Profile update simulated!');
-    setIsEditing(false);
+    setIsSaving(true);
+    try {
+      const response = await api.put('/users/profile', formData);
+      useAuthStore.getState().setUser(response.data.user);
+      toast.success('Profile updated successfully!');
+      setIsEditing(false);
+    } catch (error) {
+      toast.error(error.message || 'Failed to update profile');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -70,8 +81,8 @@ const Profile = () => {
                     <input type="text" value={formData.college} onChange={e=>setFormData({...formData, college:e.target.value})} className="w-full bg-white border border-slate-300 rounded-lg p-3 text-slate-900" />
                   </div>
                 </div>
-                <button type="submit" className="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-slate-900 rounded-lg font-bold shadow-lg shadow-indigo-500/20">
-                  Save Changes
+                <button type="submit" disabled={isSaving} className="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold shadow-lg shadow-indigo-500/20 disabled:opacity-70 transition">
+                  {isSaving ? 'Saving...' : 'Save Changes'}
                 </button>
               </form>
             ) : (
@@ -112,27 +123,6 @@ const Profile = () => {
               <p className="text-xs text-slate-600">Earn points by successfully returning items to their rightful owners.</p>
             </div>
 
-            <div>
-              <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Earned Badges</h3>
-              {(!user?.badges || user.badges.length === 0) ? (
-                <div className="text-sm text-slate-600 bg-white/50 p-4 rounded-lg border border-dashed border-slate-300">
-                  You haven't earned any badges yet. Help the community to unlock them!
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {user.badges.map(b => {
-                    const badge = BADGES[b];
-                    if (!badge) return null;
-                    return (
-                      <div key={b} className={`flex items-center gap-3 p-3 rounded-xl border border-slate-200/50 ${badge.color}`}>
-                        <span className="text-2xl">{badge.icon}</span>
-                        <span className="font-semibold text-sm">{badge.label}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
           </div>
 
         </div>

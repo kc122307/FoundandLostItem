@@ -15,9 +15,10 @@ const ReportFound = () => {
   
   const [images, setImages] = useState([]);
   const [step, setStep] = useState(1);
-  const [verificationQuestions, setVerificationQuestions] = useState([]);
-  const [verificationAnswers, setVerificationAnswers] = useState(['', '']);
-  const [loadingQuestions, setLoadingQuestions] = useState(false);
+  const [customQuestions, setCustomQuestions] = useState([
+    { question: '', answer: '' },
+    { question: '', answer: '' }
+  ]);
   const [formData, setFormData] = useState({
     title: '',
     category: 'mobile_phone',
@@ -41,22 +42,6 @@ const ReportFound = () => {
     }
   }, [coords]);
 
-  useEffect(() => {
-    const fetchQuestions = async () => {
-      setLoadingQuestions(true);
-      try {
-        const res = await api.get(`/questions/${formData.category}`);
-        setVerificationQuestions(res.data.questions);
-        setVerificationAnswers(['', '']);
-      } catch (err) {
-        toast.error('Failed to load verification questions');
-      } finally {
-        setLoadingQuestions(false);
-      }
-    };
-    fetchQuestions();
-  }, [formData.category]);
-
   const mutation = useMutation({
     mutationFn: foundItemService.create,
     onSuccess: (data) => {
@@ -71,14 +56,9 @@ const ReportFound = () => {
       return toast.error('Please fill required fields');
     }
     if (step === 2) {
-      if (!verificationAnswers[0].trim() || !verificationAnswers[1].trim()) {
-        return toast.error('Please answer both verification questions');
-      }
-      if (verificationQuestions[0]?.answerType === 'numeric' && isNaN(parseFloat(verificationAnswers[0].replace(/[^\d.-]/g, '')))) {
-        return toast.error('Question 1 requires a number in your answer');
-      }
-      if (verificationQuestions[1]?.answerType === 'numeric' && isNaN(parseFloat(verificationAnswers[1].replace(/[^\d.-]/g, '')))) {
-        return toast.error('Question 2 requires a number in your answer');
+      if (!customQuestions[0].question.trim() || !customQuestions[0].answer.trim() || 
+          !customQuestions[1].question.trim() || !customQuestions[1].answer.trim()) {
+        return toast.error('Please provide two questions and their answers');
       }
     }
     if (step === 3 && !formData.location) {
@@ -113,7 +93,12 @@ const ReportFound = () => {
       address: formData.addressString
     };
     submitData.append('location', JSON.stringify(locObj));
-    submitData.append('verificationAnswers', JSON.stringify(verificationAnswers));
+    const formattedQuestions = customQuestions.map(q => ({
+      question: q.question,
+      answer: q.answer,
+      answerType: 'descriptive'
+    }));
+    submitData.append('verificationQuestions', JSON.stringify(formattedQuestions));
 
     images.forEach(file => {
       submitData.append('images', file);
@@ -172,50 +157,46 @@ const ReportFound = () => {
           {/* STEP 2: Verification Questions */}
           {step === 2 && (
             <div className="space-y-6 animate-fadeIn">
-              <h2 className="text-xl font-semibold border-b border-slate-200 pb-2">Answer These Questions About The Item</h2>
+              <h2 className="text-xl font-semibold border-b border-slate-200 pb-2">Set Verification Answer Key</h2>
               <p className="text-sm text-slate-600 mb-4">
-                These questions help verify the true owner. Answer honestly based on what you physically see on the item. The owner must answer these same questions correctly to claim the item.
+                To prevent fraud and ensure this item is returned to its rightful owner, please ask two specific questions that only the true owner would know the answer to. Provide the correct answers based on what you see on the item.
               </p>
               
-              {loadingQuestions ? (
-                <div className="p-4 text-center text-slate-500">Loading questions...</div>
-              ) : (
-                verificationQuestions.map((q, idx) => (
-                  <div key={idx} className="bg-slate-50 rounded-xl p-4 border border-slate-200">
-                    <label className="block text-sm font-semibold text-slate-800 mb-2">
-                      <span className="inline-block bg-sky-100 text-sky-700 px-2 py-0.5 rounded mr-2">Q{idx + 1}</span>
-                      {q.question}
-                    </label>
-                    {q.answerType === 'descriptive' ? (
-                      <textarea
-                        required
-                        rows="3"
-                        value={verificationAnswers[idx]}
-                        onChange={e => {
-                          const newAns = [...verificationAnswers];
-                          newAns[idx] = e.target.value;
-                          setVerificationAnswers(newAns);
-                        }}
-                        placeholder={q.placeholder}
-                        className="w-full bg-white border border-slate-300 rounded-lg p-3 text-slate-900"
-                      />
-                    ) : (
-                      <input
-                        type={q.answerType === 'numeric' ? 'text' : 'text'}
-                        required
-                        value={verificationAnswers[idx]}
-                        onChange={e => {
-                          const newAns = [...verificationAnswers];
-                          newAns[idx] = e.target.value;
-                          setVerificationAnswers(newAns);
-                        }}
-                        placeholder={q.placeholder}
-                        className="w-full bg-white border border-slate-300 rounded-lg p-3 text-slate-900"
-                      />
-                    )}
-                  </div>
-                ))
-              )}
+              {[0, 1].map((idx) => (
+                <div key={idx} className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                  <label className="block text-sm font-semibold text-slate-800 mb-2">
+                    <span className="inline-block bg-sky-100 text-sky-700 px-2 py-0.5 rounded mr-2">Q{idx + 1}</span>
+                    Question {idx + 1}
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={customQuestions[idx].question}
+                    onChange={e => {
+                      const newQs = [...customQuestions];
+                      newQs[idx].question = e.target.value;
+                      setCustomQuestions(newQs);
+                    }}
+                    placeholder="e.g. What color is the inner lining of the bag?"
+                    className="w-full bg-white border border-slate-300 rounded-lg p-3 text-slate-900 mb-4"
+                  />
+                  <label className="block text-sm font-semibold text-slate-800 mb-2">
+                    Expected Answer
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={customQuestions[idx].answer}
+                    onChange={e => {
+                      const newQs = [...customQuestions];
+                      newQs[idx].answer = e.target.value;
+                      setCustomQuestions(newQs);
+                    }}
+                    placeholder="e.g. Red lining"
+                    className="w-full bg-white border border-slate-300 rounded-lg p-3 text-slate-900"
+                  />
+                </div>
+              ))}
               <div className="text-xs text-slate-500 mt-4 flex items-start gap-2">
                 <span className="text-sky-500 text-base">🔒</span>
                 <p>Your answers are encrypted and only used to verify the owner. They are never shown publicly.</p>

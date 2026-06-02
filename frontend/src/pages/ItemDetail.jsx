@@ -11,6 +11,7 @@ import MapView from '../components/common/MapView';
 import toast from 'react-hot-toast';
 import ClaimModal from '../components/claim/ClaimModal';
 import CreateChallengeModal from '../components/claim/CreateChallengeModal';
+import { challengeService } from '../services/challenge.service';
 
 const ItemDetail = ({ type = 'lost' }) => {
   const { id } = useParams();
@@ -34,6 +35,12 @@ const ItemDetail = ({ type = 'lost' }) => {
     queryKey: ['myClaims'],
     queryFn: () => claimService.getMyClaims(),
     enabled: !!user && type === 'found'
+  });
+
+  const { data: myChallengesData } = useQuery({
+    queryKey: ['myChallenges'],
+    queryFn: () => challengeService.getMyChallenges(),
+    enabled: !!user && type === 'lost'
   });
 
   const claimMutation = useMutation({
@@ -77,12 +84,14 @@ const ItemDetail = ({ type = 'lost' }) => {
     return <div className="text-center py-20"><h2 className="text-2xl font-bold">Item not found</h2></div>;
   }
 
-  const isOwner = user && item && (user._id === (item.userId._id || item.userId));
+  const itemOwnerId = item?.userId?._id || item?.userId;
+  const isOwner = user && itemOwnerId && String(user._id) === String(itemOwnerId);
   const category = ITEM_CATEGORIES.find(c => c.id === item.category);
   const itemDate = isLost ? item.dateLost : item.dateFound;
 
   // Find if there's an existing claim for this item
   const existingClaim = myClaimsData?.claims?.find(c => c.itemId._id === id || c.itemId === id);
+  const existingChallenge = myChallengesData?.challenges?.find(c => c.lostItemId === id || c.lostItemId?._id === id);
 
   return (
     <div className="py-8 max-w-6xl mx-auto">
@@ -193,12 +202,20 @@ const ItemDetail = ({ type = 'lost' }) => {
             {!isOwner && item.status === (isLost ? 'active' : 'available') && (
               <div className="space-y-4">
                 {isLost ? (
-                  <button 
-                    onClick={() => setShowClaimModal(true)}
-                    className="w-full py-3 rounded-lg font-bold text-slate-900 transition shadow-lg bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/30"
-                  >
-                    I Found This Item
-                  </button>
+                  <>
+                    {!existingChallenge ? (
+                      <button 
+                        onClick={() => setShowClaimModal(true)}
+                        className="w-full py-3 rounded-lg font-bold text-white transition shadow-lg bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/30"
+                      >
+                        I Found This Item
+                      </button>
+                    ) : (
+                      <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 text-center">
+                        <p className="text-indigo-800 font-medium">You have already reported finding this item. The owner has been notified.</p>
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <>
                     {!existingClaim ? (
@@ -298,6 +315,7 @@ const ItemDetail = ({ type = 'lost' }) => {
         <ClaimModal
           foundItemId={item._id}
           foundItemCategory={item.category}
+          verificationQuestions={item.verificationQuestions}
           isRetry={isRetry}
           originalClaimId={originalClaimId}
           onSuccess={(chatId) => {

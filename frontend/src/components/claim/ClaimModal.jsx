@@ -5,27 +5,19 @@ import toast from 'react-hot-toast';
 import { useMutation } from '@tanstack/react-query';
 import { claimService } from '../../services/claim.service';
 
-const ClaimModal = ({ foundItemId, foundItemCategory, isRetry = false, originalClaimId = null, onSuccess, onClose }) => {
+const ClaimModal = ({ foundItemId, foundItemCategory, verificationQuestions, isRetry = false, originalClaimId = null, onSuccess, onClose }) => {
   const [step, setStep] = useState('questions'); // 'questions', 'submitting', 'result'
-  const [questions, setQuestions] = useState([]);
-  const [answers, setAnswers] = useState(['', '']);
-  const [loadingQuestions, setLoadingQuestions] = useState(true);
+  const [questions, setQuestions] = useState(verificationQuestions || []);
+  const [answers, setAnswers] = useState(Array(verificationQuestions?.length || 0).fill(''));
+  const [loadingQuestions, setLoadingQuestions] = useState(false);
   const [result, setResult] = useState(null);
 
   useEffect(() => {
-    const fetchQuestions = async () => {
-      try {
-        const res = await api.get(`/questions/${foundItemCategory}`);
-        setQuestions(res.data.questions);
-      } catch (err) {
-        toast.error('Failed to load verification questions.');
-        onClose();
-      } finally {
-        setLoadingQuestions(false);
-      }
-    };
-    fetchQuestions();
-  }, [foundItemCategory, onClose]);
+    if (!verificationQuestions || verificationQuestions.length === 0) {
+      toast.error('Questions not found.');
+      onClose();
+    }
+  }, [verificationQuestions, onClose]);
 
   const claimMutation = useMutation({
     mutationFn: isRetry ? claimService.resubmitClaim : claimService.submitClaim,

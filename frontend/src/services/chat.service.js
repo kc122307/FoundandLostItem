@@ -21,5 +21,10 @@ export const chatService = {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
     return data;
+  },
+
+  hideChat: async (chatId) => {
+    const { data } = await api.delete(`/chats/${chatId}`);
+    return data;
   }
 };
