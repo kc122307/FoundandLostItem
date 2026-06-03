@@ -21,9 +21,11 @@ const Dashboard = () => {
   });
 
   // Filter items manually since backend getAll returns all (if no user filter implemented in query)
-  // Assuming the backend returns items belonging to all, we will filter by userId locally for this MVP dashboard
-  const myLostItems = lostData?.items?.filter(item => String(item.userId?._id || item.userId) === String(user?._id)) || [];
-  const myFoundItems = foundData?.items?.filter(item => String(item.userId?._id || item.userId) === String(user?._id)) || [];
+  const getUserId = (item) => String(item?.userId?._id || item?.userId || '');
+  const currentUserId = String(user?._id || user?.id || 'none');
+  
+  const myLostItems = lostData?.items?.filter(item => getUserId(item) === currentUserId) || [];
+  const myFoundItems = foundData?.items?.filter(item => getUserId(item) === currentUserId) || [];
 
   const currentItems = activeTab === 'lost' ? myLostItems : myFoundItems;
   const isLoading = activeTab === 'lost' ? loadingLost : loadingFound;

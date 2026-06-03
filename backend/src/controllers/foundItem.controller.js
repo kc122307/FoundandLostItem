@@ -67,7 +67,7 @@ export const create = async (req, res, next) => {
 
 export const getAll = async (req, res, next) => {
   try {
-    const { category, city, status = 'active', page = 1, limit = 20, search, user } = req.query;
+    const { category, city, status = 'available', page = 1, limit = 20, search, user } = req.query;
 
     const query = { status };
     if (user) query.userId = user;

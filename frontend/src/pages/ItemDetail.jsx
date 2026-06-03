@@ -85,7 +85,7 @@ const ItemDetail = ({ type = 'lost' }) => {
   }
 
   const itemOwnerId = item?.userId?._id || item?.userId;
-  const isOwner = user && itemOwnerId && String(user._id) === String(itemOwnerId);
+  const isOwner = Boolean(user && user._id && itemOwnerId && String(user._id) === String(itemOwnerId));
   const category = ITEM_CATEGORIES.find(c => c.id === item.category);
   const itemDate = isLost ? item.dateLost : item.dateFound;
 
@@ -102,7 +102,7 @@ const ItemDetail = ({ type = 'lost' }) => {
           <div className="glass rounded-2xl overflow-hidden p-2 border border-slate-200">
             {item.images?.length > 0 ? (
               <img 
-                src={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/uploads/items/${item.images[0]}`} 
+                src={`/uploads/items/${item.images[0]}`} 
                 alt={item.title} 
                 className="w-full h-96 object-contain bg-black/50 rounded-xl"
               />

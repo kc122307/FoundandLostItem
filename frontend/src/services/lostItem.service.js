@@ -12,9 +12,7 @@ export const lostItemService = {
   },
   
   create: async (formData) => {
-    const { data } = await api.post('/lost-items', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
+    const { data } = await api.post('/lost-items', formData);
     return data;
   },
 

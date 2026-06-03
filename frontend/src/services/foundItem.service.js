@@ -12,9 +12,7 @@ export const foundItemService = {
   },
   
   create: async (formData) => {
-    const { data } = await api.post('/found-items', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
+    const { data } = await api.post('/found-items', formData);
     return data;
   },
 

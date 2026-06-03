@@ -24,18 +24,19 @@ export const scoreOwnerAnswers = (foundItem, ownerAnswers) => {
 
     let score = 0;
 
-    if (type === 'exact') {
-      const cnorm = correctAnsStr.replace(/[^\w\s]/g, '');
-      const onorm = ownerAnsStr.replace(/[^\w\s]/g, '');
-      score = (cnorm === onorm) ? 100 : 0;
-    } 
-    else if (!type || type === 'generic') {
-      const cnorm = correctAnsStr.replace(/[^\w\s]/g, '');
-      const onorm = ownerAnsStr.replace(/[^\w\s]/g, '');
+    const cnormExact = correctAnsStr.replace(/[^\w\s]/g, '');
+    const onormExact = ownerAnsStr.replace(/[^\w\s]/g, '');
+
+    // ALWAYS check for an exact match first, regardless of answerType
+    if (cnormExact === onormExact && cnormExact.length > 0) {
+      score = 100;
+    } else if (type === 'exact') {
+      score = 0;
+    } else if (!type || type === 'generic') {
+      const cnorm = cnormExact;
+      const onorm = onormExact;
       
-      if (cnorm === onorm) {
-        score = 100;
-      } else if (cnorm.length > 3 && (onorm.includes(cnorm) || cnorm.includes(onorm))) {
+      if (cnorm.length > 3 && (onorm.includes(cnorm) || cnorm.includes(onorm))) {
         score = 100;
       } else {
         const cWords = cnorm.split(/\s+/).filter(w => w.length > 2);
@@ -70,24 +71,28 @@ export const scoreOwnerAnswers = (foundItem, ownerAnswers) => {
       }
     } 
     else if (type === 'keyword' || type === 'descriptive') {
-      const cKeywords = removeStopwords(correctAnsStr.replace(/[^\w\s]/g, ''));
-      const oKeywords = removeStopwords(ownerAnsStr.replace(/[^\w\s]/g, ''));
+      const cKeywords = removeStopwords(cnormExact);
+      const oKeywords = removeStopwords(onormExact);
       
-      let matches = 0;
-      oKeywords.forEach(kw => {
-        if (cKeywords.includes(kw)) matches++;
-      });
-      
-      const ratio = cKeywords.length > 0 ? matches / cKeywords.length : 0;
-      
-      if (ratio >= 0.6) score = 100;
-      else if (ratio >= 0.3) score = 50;
-      else score = 0;
-
-      if (type === 'descriptive') {
-        if (oKeywords.length < 5 && score > 30) {
-          score = 30; // penalize too short description
+      if (cKeywords.length === 0) {
+        // If the answer was entirely stopwords or single letters, we already checked exact match above.
+        // If we reach here, it means it wasn't an exact match, so partial string matching:
+        if (onormExact.includes(cnormExact) || cnormExact.includes(onormExact)) {
+          score = 100;
+        } else {
+          score = 0;
         }
+      } else {
+        let matches = 0;
+        oKeywords.forEach(kw => {
+          if (cKeywords.includes(kw)) matches++;
+        });
+        
+        const ratio = matches / cKeywords.length;
+        
+        if (ratio >= 0.6) score = 100;
+        else if (ratio >= 0.3) score = 50;
+        else score = 0;
       }
     }
 

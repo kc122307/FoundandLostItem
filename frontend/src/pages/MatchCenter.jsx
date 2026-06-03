@@ -78,7 +78,7 @@ const MatchCenter = () => {
                   <div className="text-rose-400 font-semibold mb-2 text-sm uppercase tracking-wider">Lost Item</div>
                   <div className="h-48 rounded-xl bg-white border border-slate-200 overflow-hidden mb-3 relative">
                     <img 
-                      src={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/uploads/items/${match.lostItemId.images[0]}`}
+                      src={`/uploads/items/${match.lostItemId.images[0]}`}
                       className="w-full h-full object-cover" 
                       alt="Lost"
                     />
@@ -105,7 +105,7 @@ const MatchCenter = () => {
                   <div className="text-emerald-400 font-semibold mb-2 text-sm uppercase tracking-wider">Found Item</div>
                   <div className="h-48 rounded-xl bg-white border border-slate-200 overflow-hidden mb-3 relative">
                     <img 
-                      src={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/uploads/items/${match.foundItemId.images[0]}`}
+                      src={`/uploads/items/${match.foundItemId.images[0]}`}
                       className="w-full h-full object-cover" 
                       alt="Found"
                     />

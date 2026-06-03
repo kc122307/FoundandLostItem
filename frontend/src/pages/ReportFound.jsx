@@ -96,7 +96,7 @@ const ReportFound = () => {
     const formattedQuestions = customQuestions.map(q => ({
       question: q.question,
       answer: q.answer,
-      answerType: 'descriptive'
+      answerType: 'generic'
     }));
     submitData.append('verificationQuestions', JSON.stringify(formattedQuestions));
 
@@ -174,7 +174,7 @@ const ReportFound = () => {
                     value={customQuestions[idx].question}
                     onChange={e => {
                       const newQs = [...customQuestions];
-                      newQs[idx].question = e.target.value;
+                      newQs[idx] = { ...newQs[idx], question: e.target.value };
                       setCustomQuestions(newQs);
                     }}
                     placeholder="e.g. What color is the inner lining of the bag?"
@@ -189,7 +189,7 @@ const ReportFound = () => {
                     value={customQuestions[idx].answer}
                     onChange={e => {
                       const newQs = [...customQuestions];
-                      newQs[idx].answer = e.target.value;
+                      newQs[idx] = { ...newQs[idx], answer: e.target.value };
                       setCustomQuestions(newQs);
                     }}
                     placeholder="e.g. Red lining"

@@ -28,7 +28,8 @@ const useAuthStore = create((set, get) => ({
     }
 
     try {
-      const response = await api.get('/auth/me');
+      // Add timestamp to prevent browser from aggressively caching GET request
+      const response = await api.get(`/auth/me?t=${new Date().getTime()}`);
       set({ user: response.data.user, isAuthenticated: true, isLoading: false });
     } catch (error) {
       get().logout();

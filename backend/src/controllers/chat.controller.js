@@ -1,6 +1,7 @@
 import Chat from '../models/Chat.js';
 import Message from '../models/Message.js';
 import Match from '../models/Match.js';
+import Notification from '../models/Notification.js';
 import { io } from '../sockets/index.js';
 
 export const getOrCreateChat = async (req, res, next) => {
@@ -145,6 +146,12 @@ export const hideChat = async (req, res, next) => {
     if (!chat.hiddenBy.includes(req.user._id)) {
       chat.hiddenBy.push(req.user._id);
       await chat.save();
+      
+      // Also delete any notifications related to this chat for the user
+      await Notification.deleteMany({
+        userId: req.user._id,
+        'data.chatId': chat._id
+      });
     }
 
     res.status(200).json({ success: true });

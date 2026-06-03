@@ -116,7 +116,12 @@ const Notifications = () => {
                 {getNotificationIcon(n.type)}
               </div>
               <div className="flex-1 min-w-0">
-                <Link to={getNotificationLink(n)} onClick={(e) => n.type === 'challenge_received' && e.preventDefault()} className="block">
+                <Link 
+                  to={getNotificationLink(n)} 
+                  state={n.data?.chatId ? { activeChatId: n.data.chatId } : undefined}
+                  onClick={(e) => n.type === 'challenge_received' && e.preventDefault()} 
+                  className="block"
+                >
                   <h4 className={`text-lg mb-1 ${n.isRead ? 'text-slate-700' : 'font-bold text-slate-900'}`}>
                     {n.title}
                   </h4>
