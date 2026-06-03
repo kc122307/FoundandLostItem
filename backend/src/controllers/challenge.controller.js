@@ -91,12 +91,15 @@ export const answerChallenge = async (req, res, next) => {
       challenge.resolvedAt = Date.now();
 
       // Create Chat
-      let chat = await Chat.findOne({ participants: { $all: [req.user._id, challenge.finderId] }, lostItemId: challenge.lostItemId._id });
+      let chat = await Chat.findOne({ participants: { $all: [req.user._id, challenge.finderId] } });
       if (!chat) {
         chat = new Chat({
           participants: [req.user._id, challenge.finderId],
           lostItemId: challenge.lostItemId._id
         });
+        await chat.save();
+      } else if (chat.hiddenBy && chat.hiddenBy.length > 0) {
+        chat.hiddenBy = [];
         await chat.save();
       }
       chatId = chat._id;

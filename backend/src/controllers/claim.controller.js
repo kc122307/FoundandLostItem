@@ -64,14 +64,17 @@ export const submitClaim = async (req, res, next) => {
     let chatId = null;
 
     if (result.approved) {
-      // Create chat
-      let chat = await Chat.findOne({ participants: { $all: [req.user._id, foundItem.userId] }, foundItemId });
+      // Create or find Chat
+      let chat = await Chat.findOne({ participants: { $all: [req.user._id, foundItem.userId] } });
       if (!chat) {
         chat = new Chat({
           participants: [req.user._id, foundItem.userId],
           foundItemId,
           lostItemId: matchedLostItem ? matchedLostItem._id : undefined
         });
+        await chat.save();
+      } else if (chat.hiddenBy && chat.hiddenBy.length > 0) {
+        chat.hiddenBy = [];
         await chat.save();
       }
       chatId = chat._id;
@@ -166,13 +169,16 @@ export const resubmitClaim = async (req, res, next) => {
     let chatId = null;
 
     if (result.approved) {
-      let chat = await Chat.findOne({ participants: { $all: [req.user._id, foundItem.userId] }, foundItemId: foundItem._id });
+      let chat = await Chat.findOne({ participants: { $all: [req.user._id, foundItem.userId] } });
       if (!chat) {
         chat = new Chat({
           participants: [req.user._id, foundItem.userId],
           foundItemId: foundItem._id,
           lostItemId: prevClaim.lostItemId
         });
+        await chat.save();
+      } else if (chat.hiddenBy && chat.hiddenBy.length > 0) {
+        chat.hiddenBy = [];
         await chat.save();
       }
       chatId = chat._id;

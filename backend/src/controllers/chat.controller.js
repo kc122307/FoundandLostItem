@@ -19,7 +19,7 @@ export const getOrCreateChat = async (req, res, next) => {
       return res.status(403).json({ error: 'Unauthorized to start chat for this match' });
     }
 
-    let chat = await Chat.findOne({ matchId });
+    let chat = await Chat.findOne({ participants: { $all: [match.lostUserId, match.foundUserId] } });
 
     if (!chat) {
       chat = new Chat({
@@ -28,6 +28,9 @@ export const getOrCreateChat = async (req, res, next) => {
         lostItemId: match.lostItemId,
         foundItemId: match.foundItemId
       });
+      await chat.save();
+    } else if (chat.hiddenBy && chat.hiddenBy.length > 0) {
+      chat.hiddenBy = [];
       await chat.save();
     }
 
@@ -121,11 +124,14 @@ export const sendImageMessage = async (req, res, next) => {
       senderId: req.user._id,
       createdAt: new Date()
     };
-    chat.hiddenBy = []; // Unhide chat when new message is sent
+    // Unhide chat for all participants when a new message is sent
+    chat.hiddenBy = [];
     await chat.save();
 
     if (io) {
-      io.to('chat:' + chatId).emit('new_message', message);
+      chat.participants.forEach(p => {
+        io.to(p.toString()).emit('new_message', message);
+      });
     }
 
     res.status(201).json({ message });

@@ -6,38 +6,39 @@ import useChatStore from '../store/chatStore';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
+let globalSocket = null;
+
 export const useSocket = () => {
-  const socketRef = useRef(null);
   const { token, isAuthenticated } = useAuthStore();
   const { addNotification } = useNotificationStore();
   const { addMessage, addTypingUser, removeTypingUser } = useChatStore();
-  const [isConnected, setIsConnected] = useState(false);
+  const [isConnected, setIsConnected] = useState(globalSocket?.connected || false);
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!isAuthenticated || !token) {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-        socketRef.current = null;
+      if (globalSocket) {
+        globalSocket.disconnect();
+        globalSocket = null;
         setIsConnected(false);
       }
       return;
     }
 
-    if (!socketRef.current) {
-      socketRef.current = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000', {
+    if (!globalSocket) {
+      globalSocket = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000', {
         auth: { token }
       });
 
-      socketRef.current.on('connect', () => {
+      globalSocket.on('connect', () => {
         setIsConnected(true);
       });
 
-      socketRef.current.on('disconnect', () => {
+      globalSocket.on('disconnect', () => {
         setIsConnected(false);
       });
 
-      socketRef.current.on('notification', (notification) => {
+      globalSocket.on('notification', (notification) => {
         addNotification(notification);
         
         if (notification.type === 'new_match') {
@@ -71,27 +72,33 @@ export const useSocket = () => {
         }
       });
 
-      socketRef.current.on('new_message', (message) => {
+      globalSocket.on('new_message', (message) => {
         addMessage(message);
       });
 
-      socketRef.current.on('user_typing', ({ userId, chatId }) => {
+      globalSocket.on('user_typing', ({ userId, chatId }) => {
         addTypingUser(userId, chatId);
       });
 
-      socketRef.current.on('user_stopped_typing', ({ userId, chatId }) => {
+      globalSocket.on('user_stopped_typing', ({ userId, chatId }) => {
         removeTypingUser(userId, chatId);
       });
+    } else {
+      setIsConnected(globalSocket.connected);
+      
+      // Setup listener to update state if socket connects/disconnects later
+      const handleConnect = () => setIsConnected(true);
+      const handleDisconnect = () => setIsConnected(false);
+      
+      globalSocket.on('connect', handleConnect);
+      globalSocket.on('disconnect', handleDisconnect);
+      
+      return () => {
+        globalSocket.off('connect', handleConnect);
+        globalSocket.off('disconnect', handleDisconnect);
+      };
     }
-
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-        socketRef.current = null;
-        setIsConnected(false);
-      }
-    };
   }, [token, isAuthenticated, addNotification, addMessage, addTypingUser, removeTypingUser, navigate]);
 
-  return { socket: socketRef.current, isConnected };
+  return { socket: globalSocket, isConnected };
 };

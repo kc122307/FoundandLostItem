@@ -45,10 +45,16 @@ export const registerChatEvents = (socket, io) => {
         senderId: socket.user._id,
         createdAt: new Date()
       };
+      
+      // Unhide chat for all participants when a new message is sent
+      chat.hiddenBy = [];
+      
       await chat.save();
 
-      // Emit to room
-      io.to('chat:' + chatId).emit('new_message', message);
+      // Emit to all participants' personal rooms
+      chat.participants.forEach(p => {
+        io.to(p.toString()).emit('new_message', message);
+      });
 
       // Create notification for other participant
       const otherParticipantId = chat.participants.find(

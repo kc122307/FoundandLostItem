@@ -34,10 +34,12 @@ connectDB().then(() => {
 
 // Handle unhandled rejections
 process.on('unhandledRejection', (err) => {
-  log('error', 'UNHANDLED REJECTION! Shutting down...', { error: err.message, stack: err.stack });
-  httpServer.close(() => {
-    process.exit(1);
-  });
+  log('error', 'UNHANDLED REJECTION!', { error: err.message, stack: err.stack });
+  // Don't crash the server on network errors (e.g. MongoDB connection resets)
+  if (err.name !== 'MongoNetworkError' && err.name !== 'MongoServerError') {
+    // Optional: could still crash for other critical errors, but usually better to let it run in dev
+    // httpServer.close(() => process.exit(1));
+  }
 });
 
 // Graceful shutdown

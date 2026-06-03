@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { chatService } from '../services/chat.service';
 import useAuthStore from '../store/authStore';
 import useChatStore from '../store/chatStore';
@@ -8,7 +8,9 @@ import { useSocket } from '../hooks/useSocket';
 import { formatTimeAgo } from '../utils/formatters';
 
 const ChatPage = () => {
-  const { state } = useLocation();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const state = location.state;
   const { user } = useAuthStore();
   const { socket, isConnected } = useSocket();
   const { chats, setChats, activeChat, setActiveChat, messages, setMessages } = useChatStore();
@@ -30,7 +32,11 @@ const ChatPage = () => {
       // Auto select chat if passed via router state or select first one
       if (state?.activeChatId) {
         const c = chatData.chats.find(c => c._id === state.activeChatId);
-        if (c) selectChat(c);
+        if (c) {
+          selectChat(c);
+          // Clear the router state so it doesn't keep forcing this chat on refetch
+          navigate(location.pathname, { replace: true, state: {} });
+        }
       } else if (chatData.chats.length > 0 && !activeChat) {
         selectChat(chatData.chats[0]);
       }
